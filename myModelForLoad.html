@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    </head>
+    <body>
+        <h1>logs</h1>
+        <div id="logs">11</div>
+        <script>
+
+            function printLogToLogsDiv(inStr){
+                logsDiv = document.getElementById("logs")
+                logsDiv.innerText = inStr+"\n" + logsDiv.innerText;
+            }
+
+            async function getModel (){
+                const model = await tf.loadLayersModel('localstorage://my-model');
+                return model;
+            }
+
+            let model = undefined;
+
+            getModel().then(result => {
+                const model = result
+                console.log("model:",model);
+
+                // 4.2 새로운 데이터를 이용
+                var nextTemperature = [15,16,17,18,19];
+                var nextFactor = tf.tensor(nextTemperature);
+                var nextEffct = model.predict(nextFactor)
+                printLogToLogsDiv(nextEffct)
+
+                console.log("model.getWeights() : ",model.getWeights());                
+            });
+
+
+
+        </script>
+    </body>
+</html>

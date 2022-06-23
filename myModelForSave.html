@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    </head>
+    <body>
+        <h1>logs</h1>
+        <div id="logs">11</div>
+        <script>
+
+            function printLogToLogsDiv(inStr){
+                logsDiv = document.getElementById("logs")
+                logsDiv.innerText = inStr+"\n" + logsDiv.innerText;
+            }
+
+            // 1. 과거의 데이터를 준비합니다.
+            var temperature = [20,21,22,23];
+            var sale = [40,42,44,46];
+            var factor = tf.tensor(temperature);
+            var effct = tf.tensor(sale);
+
+            // 2. 모델의 모양을 만듭니다.
+            var X = tf.input({shape:[1]});
+            var Y = tf.layers.dense({units:1}).apply(X);
+            var model = tf.model({inputs:X, outputs: Y});
+            var compileParam = { optimizer: tf.train.adam(), loss: tf.losses.meanSquaredError}
+            model.compile(compileParam);
+
+            // 3. 데이터로 모델을 학습시킵니다.
+            // var fitParam = {epochs: 100}
+            var fitParam = {epochs: 50, callbacks:{
+                onEpochEnd:function(epoch, logs){
+                    // 학습을 할 때마다 로그 생성
+                    // console.log('epoch',epoch, logs)
+                    printLogToLogsDiv('epoch : '+ epoch + " / loss : "+logs.loss + " / RMSE : "+Math.sqrt(logs.loss))
+            }}}
+
+            model.fit(factor, effct, fitParam).then(async function (result){
+
+                // 4. 모델을 이용합니다.
+                // 4.1. 기존의 데이터를 이용
+                var predictResult = model.predict(factor);
+                // predictResult.print();
+                printLogToLogsDiv(predictResult);
+
+
+                // 모델 다운로드
+                // await model.save('downloads://myModle')
+                // 로컬 브라우저 저장 공간 이용
+                await model.save('localstorage://my-model');
+            })
+
+            // 4.2 새로운 데이터를 이용
+            var nextTemperature = [15,16,17,18,19];
+            var nextFactor = tf.tensor(nextTemperature);
+            var nextEffct = model.predict(nextFactor)
+            printLogToLogsDiv(nextEffct)
+
+            console.log("model.getWeights() : ",model.getWeights());
+
+        </script>
+    </body>
+</html>

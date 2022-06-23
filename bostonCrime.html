@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+        <script src="./bostonCrimeData.js"></script>
+    </head>
+    <body>
+        <h1>logs</h1>
+        <div id="logs">11</div>
+        <script>
+
+            // boston_factor
+            // boston_effect
+
+            function printLogToLogsDiv(inStr){
+                logsDiv = document.getElementById("logs")
+                logsDiv.innerText = inStr+"\n" + logsDiv.innerText;
+            }
+
+            // 1. 과거의 데이터를 준비합니다.
+            var factor = tf.tensor(boston_factor);
+            var effct = tf.tensor(boston_effect);
+
+            // 2. 모델의 모양을 만듭니다.
+            var X = tf.input({shape:[13]});
+            var Y = tf.layers.dense({units:1}).apply(X);
+            var model = tf.model({inputs:X, outputs: Y});
+            var compileParam = { optimizer: tf.train.adam(), loss: tf.losses.meanSquaredError}
+            model.compile(compileParam);
+
+            // 3. 데이터로 모델을 학습시킵니다.
+            // var fitParam = {epochs: 100}
+            var fitParam = {epochs: 500, callbacks:{
+                onEpochEnd:function(epoch, logs){
+                    // 학습을 할 때마다 로그 생성
+                    // console.log('epoch',epoch, logs)
+                    printLogToLogsDiv('epoch : '+ epoch + " / loss : "+logs.loss + " / RMSE : "+Math.sqrt(logs.loss))
+            }}}
+
+            model.fit(factor, effct, fitParam).then(async function (result){
+
+                // 4. 모델을 이용합니다.
+                // 4.1. 기존의 데이터를 이용
+                var predictResult = model.predict(factor);
+                // predictResult.print();
+                printLogToLogsDiv(predictResult);
+
+
+                // 모델 다운로드
+                // await model.save('downloads://myModle')
+                // 로컬 브라우저 저장 공간 이용
+                await model.save('localstorage://my-model');
+
+                // 4.2 새로운 데이터를 이용
+                var nextFactor = tf.tensor(boston_factor);
+                var nextEffct = model.predict(nextFactor)
+                printLogToLogsDiv("======================================================")
+                printLogToLogsDiv(nextEffct)
+
+                const weights = model.getWeights();
+                console.log("weights : ",weights);
+                console.log("weight / weights[0].arraySync() : ",weights[0].arraySync());
+                console.log("bias / weights[1].arraySync() : ",weights[1].arraySync());
+
+            })
+
+
+
+        </script>
+    </body>
+</html>
